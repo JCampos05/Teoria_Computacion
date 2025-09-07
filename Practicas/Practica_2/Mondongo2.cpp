@@ -9,7 +9,6 @@
 #include <regex>
 using namespace std;
 
-string MainInput = ""; // entrada principal de lectura
 int Transition_table [13][10] = {
         {1, 2, 6, 12, 12, 2, 12, 12, 4, 0},
         {2, 2, 3, -10, -10, 2, -10, -10, -10, 101}, 
@@ -115,21 +114,22 @@ int tokens(char simbolo) { // funcion para asignar token en las filas de la matr
 }
 //inicia Table [0,0]
 // funcion principal llamada en la interfaz de consola donde realiza todo el trabajo algoritmico
+string MainInput = ""; // entrada principal de lectura
 int Estate = 0; // En la matriz es la coordenada [0][0]; siendo el estado #1
 void Mainprocess(){
     int NoEstate = 0, token = 0; // eje i,j correspondientemente -> las dos variables que recorren la matriz
+    Estate = 0; // limpia el #estado en caso de que se haya presentado un error en la anterior evaluacion
     for (int a = 0; a < MainInput.length(); a++) { // hace el ciclo de cada caracter del input
-        if (Estate < 0) break;
-        Estate = 0;
+        if (Estate < 0) break; // detecta si directamente es un error
         char simbolo = MainInput[a]; 
         token = tokens( simbolo ); //asigna el token del eje j
         Estate = Transition_table[NoEstate][token]; // asigna el # estado correspondiente
         /* Ojo las variables i,j son las que recorren pero recordar que estas se les resta 
         una posicion porque la matriz comienza en [0,0], independientemente de que esten declaradas como [13][10] */
-        //cout << "# Estado Actual :" << NoEstate   << endl;
-        //cout << "# Estado Siguiente:" << Estate << endl;
-        //cout << "# Token :" << token << endl; 
-        //cout << endl; 
+        /*cout << "# Estado Actual :" << NoEstate   << endl;
+        cout << "# Estado Siguiente:" << Estate << endl;
+        cout << "# Token :" << token << endl; 
+        cout << endl; */
         NoEstate = Estate - 1 ; //resta la posicion para el siguiente recorrido de la matriz
     }
     string resul;
