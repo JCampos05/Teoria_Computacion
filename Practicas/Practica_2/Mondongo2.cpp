@@ -12,10 +12,10 @@ using namespace std;
 string MainInput = ""; // entrada principal de lectura
 int Transition_table [13][10] = {
         {1, 2, 6, 12, 12, 2, 12, 12, 4, 0},
-        {2, 2, 3, -10, -10, 2, -10, -10, -10, 101}, // 100 = acept
-        {3, -20, 3, -10, -10, 2, -10, -10, -10, 101}, // 100 = acept
+        {2, 2, 3, -10, -10, 2, -10, -10, -10, 101}, 
+        {3, -20, 3, -10, -10, 2, -10, -10, -10, 101},
         {4, 4, 4, 4, 4, 4, 4, 4, 5, 0},
-        {5, 0, 0, 0, 0, 0, 0, 0, 0, 102}, // 100 = acept
+        {5, 0, 0, 0, 0, 0, 0, 0, 0, 102}, 
         {6, -30, 6, -40, 7, 9, -40, -40, -40, 103},
         {7, -30, 8, -40, 7, 9, -40, -40, -40, 0},
         {8, -30, 8, -40, -40, 9, -40, -40, -40, 104},
@@ -81,8 +81,20 @@ string identfinal(int NoEstate, int token){
         case 105: return "double";
         case 106: return "simbolo simple";
         case 107: return "simbolo compuesto";
-        default: return  "tipo desconocido";
+        default: return  "Error -90. Tipo desconocido. No es posible la acción";
     }
+}
+bool Palabra(const string& input){ // funcion para detectar la posible palabra reservada 
+    for (const string& palabra : palabras_reservadas) {
+        // Crear patrón: palabra completa (no substring)
+        string patron = "\\b" + palabra + "\\b";
+        regex reg(patron);
+        if (regex_search(input, reg)) {
+            cout << "Encontrada palabra reservada: " << palabra << endl;
+            return true;
+        }
+    }
+    return false;
 }
 
 //funcion para determinar si el caracter analizado es de un conjunto
@@ -101,25 +113,14 @@ int tokens(char simbolo) { // funcion para asignar token en las filas de la matr
     if (symbol(simbolo)) return 3;
     return 0;
 }
-
-bool Palabra(const string& input){ // funcion para detectar la posible palabra reservada 
-    for (const string& palabra : palabras_reservadas) {
-        // Crear patrón: palabra completa (no substring)
-        string patron = "\\b" + palabra + "\\b";
-        regex reg(patron);
-        if (regex_search(input, reg)) {
-            cout << "Encontrada palabra reservada: " << palabra << endl;
-            return true;
-        }
-    }
-    return false;
-}
 //inicia Table [0,0]
 // funcion principal llamada en la interfaz de consola donde realiza todo el trabajo algoritmico
 int Estate = 0; // En la matriz es la coordenada [0][0]; siendo el estado #1
 void Mainprocess(){
     int NoEstate = 0, token = 0; // eje i,j correspondientemente -> las dos variables que recorren la matriz
     for (int a = 0; a < MainInput.length(); a++) { // hace el ciclo de cada caracter del input
+        if (Estate < 0) break;
+        Estate = 0;
         char simbolo = MainInput[a]; 
         token = tokens( simbolo ); //asigna el token del eje j
         Estate = Transition_table[NoEstate][token]; // asigna el # estado correspondiente
