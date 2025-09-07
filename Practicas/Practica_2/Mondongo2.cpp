@@ -9,8 +9,7 @@
 #include <regex>
 using namespace std;
 
-string MainInput = "";
-
+string MainInput = ""; // entrada principal de lectura
 int Transition_table [13][10] = {
         {1, 2, 6, 12, 12, 2, 12, 12, 4, 0},
         {2, 2, 3, -10, -10, 2, -10, -10, -10, 101}, // 100 = acept
@@ -27,12 +26,12 @@ int Transition_table [13][10] = {
         {13, 0, 0, 0, 0, 0, 0, 0, 0, 107},
     };
 
+//sets con los caracteres y palabras reservadas
 set<char> valid_symbols = {
     '+', '-', '*', '/', '%', '<', '>', '=', '!', 
     '&', '|', '^', '~', ';', ',', '.', ':', '(', 
     ')', '[', ']', '{', '}', '?', '"', '\'', '\\', '#'
 };
-
 const set <string> palabras_reservadas= {
     // De C
     "auto", "break", "case", "char", "const", "continue", "default", "do",
@@ -56,6 +55,7 @@ void error(){
     system("pause");
     system("cls");
 }
+//funcion de asignacion de error
 string errores(int NoEstate, int token){
     int aux = Transition_table[NoEstate][token];
     switch (aux) {
@@ -70,6 +70,7 @@ string errores(int NoEstate, int token){
     }
 }
 
+//funcion de identificador final de la entrada
 string identfinal(int NoEstate, int token){
     int aux = Transition_table[NoEstate][token];
     switch (aux) {
@@ -114,6 +115,7 @@ bool Palabra(const string& input){ // funcion para detectar la posible palabra r
     return false;
 }
 //inicia Table [0,0]
+// funcion principal llamada en la interfaz de consola donde realiza todo el trabajo algoritmico
 int Estate = 0; // En la matriz es la coordenada [0][0]; siendo el estado #1
 void Mainprocess(){
     int NoEstate = 0, token = 0; // eje i,j correspondientemente -> las dos variables que recorren la matriz
