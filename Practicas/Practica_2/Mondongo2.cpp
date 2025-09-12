@@ -10,23 +10,23 @@
 using namespace std;
 
 int Transition_table [13][10] = {
-        {1, 2, 6, 12, 12, 2, 12, 12, 4, 0},
+        {1, 2, 6, 12, 12, 2, 12, 12, 4, -5},
         {2, 2, 3, -10, -10, 2, -10, -10, -10, 101}, 
         {3, -20, 3, -10, -10, 2, -10, -10, -10, 101},
-        {4, 4, 4, 4, 4, 4, 4, 4, 5, 0},
+        {4, 4, 4, 4, 4, 4, 4, 4, 5, -5},
         {5, 0, 0, 0, 0, 0, 0, 0, 0, 102}, 
         {6, -30, 6, -40, 7, 9, -40, -40, -40, 103},
-        {7, -30, 8, -40, 7, 9, -40, -40, -40, 0},
+        {7, -30, 8, -40, 7, 9, -40, -40, -40, -5},
         {8, -30, 8, -40, -40, 9, -40, -40, -40, 104},
-        {9, -30, -50, -50, -50, -50, 10, 10, -50, 0},
-        {10, -30, 11, -40, -40, -30, -40, -40, -40, 0},
+        {9, -30, -50, -50, -50, -50, 10, 10, -50, -5},
+        {10, -30, 11, -40, -40, -30, -40, -40, -40, -5},
         {11, -30, 11, -40, -40, -30, -40, -40, -40, 105},
         {12, -30, -60, 13, 13, -60, 13, 13, 13, 106},
         {13, 0, 0, 0, 0, 0, 0, 0, 0, 107},
     };
 
 //sets con los caracteres y palabras reservadas
-set<char> valid_symbols = {
+set <char> valid_symbols = {
     '+', '-', '*', '/', '%', '<', '>', '=', '!', 
     '&', '|', '^', '~', ';', ',', '.', ':', '(', 
     ')', '[', ']', '{', '}', '?', '"', '\'', '\\', '#'
@@ -42,22 +42,23 @@ const set <string> palabras_reservadas= {
     "explicit", "export", "false", "friend", "inline", "mutable", "namespace",
     "new", "operator", "private", "protected", "public", "reinterpret_cast",
     "static_cast", "template", "this", "throw", "true", "try", "typeid",
-    "typename", "using", "virtual", "wchar_t"
+    "typename", "using", "virtual", "wchar_t","where"
 };
 
 void error(){
     cin.clear();
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
     system("cls");
-    cout<<endl;
-    cout<<"Ingrese un dato válido"<<endl;
+    cout << endl;
+    cout << "Ingrese un dato válido" << endl;
+    cout << "Error -90. Tipo desconocido. No es posible la acción" << endl;
     system("pause");
     system("cls");
 }
 //funcion de asignacion de error
-string errores(int NoEstate, int token){
-    int aux = Transition_table[NoEstate][token];
-    switch (aux) {
+string errores(int NoEstate) {
+    //int aux = Transition_table[NoEstate][token];
+    switch (NoEstate) {
         case 0: return "Error -70. No es posible la acción. Entrada no válida.";
         case -10: return "Error -10. No se permite el uso de caracteres especiales.";
         case -20: return "Error -20. No se permite el uso de letras posterior a un digito.";
@@ -65,13 +66,16 @@ string errores(int NoEstate, int token){
         case -40: return "Error -40. No se perimte el uso de caracteres especiales.";
         case -50: return "Error -50. No se permite el uso de digitos ni letras en los caracteres de notacion cientifica. Solo esta permitido los signos + y -";
         case -60: return "Error -60. No se permite el uso de letras ni digitos.";
+        case -5: return "Error -5. Hubo un error de reconocimiento.";
         default: return  "Error -5. Hubo un error de reconocimiento.";
     }
 }
 
 //funcion de identificador final de la entrada
 string identfinal(int NoEstate, int token){
+
     int aux = Transition_table[NoEstate][token];
+    cout << aux << endl;
     switch (aux) {
         case 101: return "variable";
         case 102: return "string";
@@ -80,10 +84,10 @@ string identfinal(int NoEstate, int token){
         case 105: return "double";
         case 106: return "simbolo simple";
         case 107: return "simbolo compuesto";
-        default: return  "Error -90. Tipo desconocido. No es posible la acción";
+        default:  return  errores(NoEstate) ;//"Error -90. Tipo desconocido. No es posible la acción";
     }
 }
-bool Palabra(const string& input){ // funcion para detectar la posible palabra reservada 
+bool Palabra(const string& input) { // funcion para detectar la posible palabra reservada 
     for (const string& palabra : palabras_reservadas) {
         // Crear patrón: palabra completa (no substring)
         string patron = "\\b" + palabra + "\\b";
@@ -116,7 +120,7 @@ int tokens(char simbolo) { // funcion para asignar token en las filas de la matr
 // funcion principal llamada en la interfaz de consola donde realiza todo el trabajo algoritmico
 string MainInput = ""; // entrada principal de lectura
 int Estate = 0; // En la matriz es la coordenada [0][0]; siendo el estado #1
-void Mainprocess(){
+void Mainprocess() {
     int NoEstate = 0, token = 0; // eje i,j correspondientemente -> las dos variables que recorren la matriz
     Estate = 0; // limpia el #estado en caso de que se haya presentado un error en la anterior evaluacion
     for (int a = 0; a < MainInput.length(); a++) { // hace el ciclo de cada caracter del input
@@ -132,8 +136,13 @@ void Mainprocess(){
         cout << endl; */
         NoEstate = Estate - 1 ; //resta la posicion para el siguiente recorrido de la matriz
     }
+    //NoEstate ++;
     string resul;
-    if (token > 0) {
+    /*cout << "===================" << endl;    
+    cout << "# Estado Actual :" << NoEstate   << endl;
+    cout << "# Estado Siguiente:" << Estate << endl;
+    cout << "# Token :" << token << endl; */
+    if (Estate > 0) {
         if (NoEstate == 1 || NoEstate == 2) {
             if (Palabra(MainInput)) {
                 cout << "Error -80. No es posible la acción. Palabra reservada." << endl;
@@ -148,7 +157,7 @@ void Mainprocess(){
         cout << "     La entrada corresponde a: " << resul << endl;
         cout << endl;
     } else {
-        resul = errores(NoEstate, token);
+        resul = errores(NoEstate);
         cout << "    ┌─────────────────────────────────────┐" << endl;
         cout << "    |---| Resultado de la evaluación: |---|" << endl;
         cout << "    └─────────────────────────────────────┘" << endl;
