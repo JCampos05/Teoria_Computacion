@@ -1,9 +1,13 @@
 {
     "files.associations": {
+        "*.lisp": "commonlisp",
+        "*.cl": "commonlisp",
+        "*.lsp": "commonlisp",
         "xstring": "cpp",
         "format": "cpp",
         "iostream": "cpp",
         "limits": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "string": "cpp"
     }
 }
