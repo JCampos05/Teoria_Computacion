@@ -37,12 +37,22 @@ bool salario(const string& Maininput){
     regex patron (R"(^(278\.(1[8-9]|[2-9]\d*)|27[9](\.\d+)?|28[0-9](\.\d+)?|29\d(\.\d+)?|[3-9]\d{2}(\.\d+)?|\d{4,}(\.\d+)?)$)");
     if (regex_match(MainInput, patron)) return true; else return false;
 }
+bool RFC(const string& Maininput){\
+    regex patron (R"()"); // <-------------------------------- FALTA!!
+    if (regex_match(MainInput, patron)) return true; else return false;
+}
+bool correo(const string& Maininput){
+    regex patron (R"(^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$)");
+    if (regex_match(MainInput, patron)) return true; else return false;
+}
 string Mainprocess(const string& Maininput){
     if (NomApe(MainInput)) return "Coincidencia. Nombre y/o apellido encontrado";
     if (Edad(MainInput)) return "Coincidencia. Edad encontrada";
     if (telefono(MainInput)) return "Coindicenia. Número de télefono encontrado";
     if (salario(MainInput)) return "Coincidencia. Salario mínimo";
-    return "";
+    if (RFC(MainInput)) return "Coincidencia. RFC encontrado";
+    if (correo(MainInput)) return "Coincidencia. Correo electrónico encontrado";
+    return "Ninguna coincidencia. La entrada no corresponde a ninguna opción.";
 }
 
 void interfaz() {
@@ -55,6 +65,7 @@ void interfaz() {
             cout << "    |---| Práctica 4. Expresiones Regulares |---|" << endl;
             cout << "    └───────────────────────────────────────────┘" << endl;
             cout << endl;
+            //poner que opciones puede evaluar <- quiza con los formatos
             cout << "    Ingrese la entrada a evaluar:"<<endl;
             cout << endl;
             cout << "Entrada:  ";
