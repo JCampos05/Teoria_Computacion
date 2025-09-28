@@ -37,8 +37,9 @@ bool salario(const string& Maininput){
     regex patron (R"(^(278\.(1[8-9]|[2-9]\d*)|27[9](\.\d+)?|28[0-9](\.\d+)?|29\d(\.\d+)?|[3-9]\d{2}(\.\d+)?|\d{4,}(\.\d+)?)$)");
     if (regex_match(MainInput, patron)) return true; else return false;
 }
-bool RFC(const string& Maininput){\
-    regex patron (R"()"); // <-------------------------------- FALTA!!
+bool RFC(const string& Maininput){
+    //^([A-Z]{4}\d{6}|[A-Z]{4}\d{9})$
+    regex patron (R"(^[A-Z]{3,4}\d{6}[A-Z0-9]{3}$)");
     if (regex_match(MainInput, patron)) return true; else return false;
 }
 bool correo(const string& Maininput){
@@ -65,21 +66,24 @@ void interfaz() {
             cout << "    |---| Práctica 4. Expresiones Regulares |---|" << endl;
             cout << "    └───────────────────────────────────────────┘" << endl;
             cout << endl;
-            //poner que opciones puede evaluar <- quiza con los formatos
+            cout << " Opciones a evaluar: " << endl;
+            cout << "  -> Nombres y Apellidos." << endl;
+            cout << "  -> Edad (# enteros)." << endl;
+            cout << "  -> # Telefónicos (### ### #### o ## #### ####)." << endl;
+            cout << "  -> Salario (mayor a $278.18)." << endl;
+            cout << "  -> RFC (Persona física o moral)." << endl;
+            cout << "  -> Correo electrónico." << endl;
+            cout << endl;
             cout << "    Ingrese la entrada a evaluar:"<<endl;
             cout << endl;
             cout << "Entrada:  ";
             cin >> MainInput , cout << " \t";
             cout << endl;
-            if (cin.fail()){
-                error();
-            }
+            if (cin.fail()) error();
             cout << Mainprocess(MainInput) << endl;
             cout<<"  ¿Desea realizar otra evaluación? 1)Sí 2)No?  ", cin >> seguir;
             cout << endl;
-            if (cin.fail()){
-                error();
-            }
+            if (cin.fail()) error(); 
         } while (cin.fail() || seguir != 1 && seguir != 2);
         system("cls");
     } while (seguir == 1);
