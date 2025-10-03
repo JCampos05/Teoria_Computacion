@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <string> //manipulación de stings
 #include <cctype>
-#include <vector>
-#include <set>  
 #include <regex>
 using namespace std;
 
@@ -20,33 +18,33 @@ void error(){
     system("pause");
     system("cls");
 }
-
-bool NomApe(const string& Maininput){
+bool NomApe(const string& Maininput){ // Expresión regular para evaluar Nombres y Apellidos
     regex patron (R"(^[A-Z][a-z]+(\s[A-Z][a-z]+)*$)");
     if (regex_match(MainInput, patron)) return true; else return false;
 }
-bool Edad(const string& Maininput){
+bool Edad(const string& Maininput){ // Expresión regular para evaluar edad
     regex patron (R"(^(1[8-9]|[2-9][0-9])$)");
     if (regex_match(MainInput, patron)) return true; else return false;
 }
-bool telefono(const string& Maininput){
+bool telefono(const string& Maininput){ // Expresión regular para evaluar números de teléfono
     regex patron (R"(^(\d{2}\s?\d{4}\s?\d{4}|\d{3}\s?\d{3}\s?\d{4})$)");
     if (regex_match(MainInput, patron)) return true; else return false;
 }
-bool salario(const string& Maininput){
+bool salario(const string& Maininput){ // Expresión regular para evaluar el salario mínimo en adelante
     regex patron (R"(^(278\.(1[8-9]|[2-9]\d*)|27[9](\.\d+)?|28[0-9](\.\d+)?|29\d(\.\d+)?|[3-9]\d{2}(\.\d+)?|\d{4,}(\.\d+)?)$)");
     if (regex_match(MainInput, patron)) return true; else return false;
 }
-bool RFC(const string& Maininput){
+bool RFC(const string& Maininput){ // Expresión regular para evaluar RFC de persona moral y/o física
     //^([A-Z]{4}\d{6}|[A-Z]{4}\d{9})$
     regex patron (R"(^[A-Z]{3,4}\d{6}[A-Z0-9]{3}$)");
     if (regex_match(MainInput, patron)) return true; else return false;
 }
-bool correo(const string& Maininput){
-    regex patron (R"(^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$)");
+bool correo(const string& Maininput){ // Expresión regular para evaluar correos
+    //regex patron (R"(^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$)");
+    regex patron (R"(^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\.[a-zA-Z]{2,})*$)");
     if (regex_match(MainInput, patron)) return true; else return false;
 }
-string Mainprocess(const string& Maininput){
+string Mainprocess(const string& Maininput){ // función donde va evaluando a que coincide la entrada del programa
     if (NomApe(MainInput)) return "Coincidencia. Nombre y/o apellido encontrado";
     if (Edad(MainInput)) return "Coincidencia. Edad encontrada";
     if (telefono(MainInput)) return "Coindicenia. Número de télefono encontrado";
@@ -56,7 +54,7 @@ string Mainprocess(const string& Maininput){
     return "Ninguna coincidencia. La entrada no corresponde a ninguna opción.";
 }
 
-void interfaz() {
+void interfaz() { // bloque principal donde se solicita la entrada, posterior se manda a evaluar devolviendo un resultado
     int opc = 0 , seguir = 1;
     system("cls");
     do{
@@ -78,6 +76,9 @@ void interfaz() {
             cout << endl;
             cout << "Entrada:  ";
             cin >> MainInput , cout << " \t";
+            string aux;
+            getline(cin,aux); // tambien toma los espacios en blanco \s
+            MainInput += aux; // concatena los espacios en blanco
             cout << endl;
             if (cin.fail()) error();
             cout << Mainprocess(MainInput) << endl;

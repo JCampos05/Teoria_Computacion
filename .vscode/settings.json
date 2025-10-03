@@ -9,6 +9,7 @@
         "limits": "cpp",
         "ostream": "cpp",
         "string": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "set": "cpp"
     }
 }

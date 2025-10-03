@@ -73,7 +73,6 @@ string errores(int NoEstate) {
 
 //funcion de identificador final de la entrada
 string identfinal(int NoEstate, int token){
-
     int aux = Transition_table[NoEstate][token];
     cout << aux << endl;
     switch (aux) {
