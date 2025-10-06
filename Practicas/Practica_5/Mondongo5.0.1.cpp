@@ -25,6 +25,27 @@ void error(){
     system("pause");
     system("cls");
 }
+
+void mostrarPila(stack<AP> pila) {
+    if (pila.empty()) {
+        cout << "   [Pila vacía]" << endl;
+        cout << endl;
+        return;
+    }
+    cout << "   [Pila: ";
+    stack<AP> temp;
+    while (!pila.empty()) {
+        temp.push(pila.top());
+        pila.pop();
+    }
+    while (!temp.empty()) {
+        cout << "1";
+        temp.pop();
+        if (!temp.empty()) cout << " , ";
+    }
+    cout << "]" << endl;
+    cout << endl;
+}
 // funciones booleanas auxiliares
 bool symbol(char simb) { // verifica si el caracter es un simbolo
     return simb == '+' || simb == '-' || simb == '*' || simb == '/' || simb == '^' || simb == '%';
@@ -78,15 +99,16 @@ bool MainProcess(string Maininput){
             p.caracter = carac;
             p.posicion = i;
             AFP.push(p);
-            // <----------------------- Funcion de mostrar pila
+            mostrarPila(AFP);
         } else if (carac == ')') {
             cout << "Posición: "<< i << "\t " << carac <<" \t <-- Parentesis que cierra" << endl;
             if (AFP.empty()) {
+                cout << endl;
                 cout << "Error. Parentesis que cierra inválido en la posición #:  " << i << endl;
                 return false;
             }
             AFP.pop();
-            // <----------------------- Funcion de mostrar pila
+            mostrarPila(AFP);
         } else if (symbol(carac)) {
             if ((carac == '-' || carac == '+') && (i == 0 || MainInput[i-1] == '(' || symbol(MainInput[i-1]))) {
                 if (i + 1 < MainInput.length() && (Digito(MainInput[i+1]) || MainInput[i+1] == '.')) {
@@ -98,16 +120,19 @@ bool MainProcess(string Maininput){
         } else if (Digito(carac) || carac == '.') {
             auxNum(MainInput, i);
         } else {
+            cout << endl;
             cout << "Error. Carácter inválido: " << carac << " en la posición: " << i << endl;
             return false; 
         }
     }
     if (!AFP.empty()) {
         AP p = AFP.top();
+        cout << endl;
         cout << "Error. Parentesis que cierra inválido en la posición:  " << p.posicion << endl;
         return false;
     }
     cout << "Expresión válida. El uso de parentesis es correcto." << endl;
+    cout << endl;
     return true;
 }
 
