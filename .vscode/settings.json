@@ -10,6 +10,10 @@
         "ostream": "cpp",
         "string": "cpp",
         "regex": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "cctype": "cpp",
+        "vector": "cpp",
+        "stack": "cpp",
+        "xlocale": "cpp"
     }
 }
