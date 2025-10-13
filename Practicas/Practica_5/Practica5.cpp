@@ -16,7 +16,7 @@ struct AP {
     int posicion;
 };
 
-void error() {
+void error(){
     cin.clear();
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
     system("cls");
@@ -54,7 +54,7 @@ bool Digito(char caracter) { // verifica si es un dígito
     return isdigit(caracter);
 }
 //funcion para determinar si el numero es positivo, negativo, entero o real
-void auxNum(const string& Maininput, int& i) {
+void auxNum(const string& Maininput, int& i){
     string numero = "";
     int inicio = i;
     bool negativo = false,  real = false;
