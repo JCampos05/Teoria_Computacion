@@ -14,21 +14,21 @@ write("Ingrese los años de estudio: ");
 input(years);
 
 if(prom >= 80){
-    for(i = 0; i < years ; i++){
-        porcentaje += 0.05;
+    for(int i = 0; i < years ; i++){
+        float porcentaje += 0.05;
     }
-    beca = true;
-    porcBeca = porcentaje * 100;
-    write("El alumno " , nombre , " tiene: " , porcBeca , " % de beca por obtener el promedio de: " , prom);
-} else if ((prom >= 6) && (prom < 8)){
+    bool beca = true;
+    int porcBeca = porcentaje * 100;
+    write("El alumno " , alumno , " tiene: " , porcBeca , " % de beca por obtener el promedio de: " , prom);
+} else if ((prom >= 60) && (prom < 80)){
     for(i = 0; i < years ; i++){
-        porcentaje += 0.02;
+        float porcentaje += 0.02;
     }
-    beca = true;
-    porcBeca = porcentaje * 100;
-    write("El alumno " , nombre , " tiene: " , porcBeca , " % de beca por obtener el promedio de: " , prom);
+    bool beca = true;
+    int porcBeca = porcentaje * 100;
+    write("El alumno " , alumno , " tiene: " , porcBeca , " % de beca por obtener el promedio de: " , prom);
 } else {
-    beca = false;
+    bool beca = false;
     write("El alumno no pudo obtener beca.");
 }
 system("pause");

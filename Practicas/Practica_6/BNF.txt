@@ -4,7 +4,7 @@
 
 <sentence> ::= <var_asign> │ <input_var> │ <output_var> │ 
             <sent_asign> │ <sent_exp_math> │ <sent_exp_rel>
-            <sent_if> │ <sent_for>
+            <sent_if> │ <sent_for> │ <id>
 
 <var_asign> ::= <var_type>
 <var_type> ::= <alpha_num> │ <numeric> │ <boolean>
@@ -12,48 +12,53 @@
 <alpha_num> ::= char = <character>; │ string = <word>;
 <word> ::= <character><word> │ <character>
 <character> ::= [A│B│C│...│Z│a│b│c│...│z]
+<"chain"> ::= {[A│B│C│...│Z│a│b│c│...│z]}
 
-<boolean> ::= bool <word> <bool_status>;
+<boolean> ::= bool <word> = <bool_status>;
 <bool_status> ::= true │ false
 
-<numeric> ::= int  = <nums> , <numeric>; │ float <float>;
+<numeric> ::=   int <word> = <nums>; │ int <word> = var; │ int <word> = <sent_exp_math>; │
+                float <word> = <float>; │ float <word> = var; │ float <word> = <sent_exp_math>;
 <float> ::= <numss> │ <numss>.<numss>
 
 <numss> ::= <num><nums> │ <num>
 <nums> ::= <num><nums> │ <num>
 <num> ::= 0│1│2│...│9
 
+<id> ::= <nums> │ <num> │ var │ "chain" │ <float>
+
 <input_var> ::= input(<ListIds>);
-<ListIds> ::= id <ListIds> │ id  <----------------- referencia a variables
+<ListIds> ::= <id> <ListIds> │ <id>  <----------------- referencia a variables
 
 <output_var> ::= write(<List_output>);
 <List_output> ::= <elmt_out>,<List_output> │ <elmt_out>
-<elmt_out> ::= expression │ "chain" │ bool_exp
+<elmt_out> ::= expression │ "chain" │ bool_exp │ <id>
 
 <sent_exp_math> ::= <sent_exp_math> + <term> │ 
                     <sent_exp_math> - <term> │
                     <term> 
 <term> ::= <term> * <element> │ <term> / <element> │ 
             <term> % <element> │ <element>
-<element> ::= (<sent_exp_math>) │ id │ <num> │ -<term> │ +<term> 
+<element> ::= (<sent_exp_math>) │ <id> │ <num> │ <nums> │ -<term> │ +<term> 
                                      <----------------- referencia a variables
 <sent_exp_rel> ::= <exp_log>
-<exp_log> ::= <exp_log> ││ <exp_and> │ <exp_and>
-<exp_and> ::= <exp_and> && <exp_not> │ <exp_not>
+<exp_log> ::= (<exp_log>) ││ (<exp_and>) │ <exp_and>
+<exp_and> ::= (<exp_and>) && (<exp_not>)│ <exp_not>
 <exp_not> ::= !<exp_not> │ <cmp>
 <cmp> ::=  <alpha_num> <log_ope> <alpha_num> │ 
            <numeric> <log_ope> <numeric> │ 
            <boolean> <log_ope> <boolean> │ 
+           <id> <log_ope> <id> │ 
            <exp_log> │ true │ false
 <log_ope> ::= < │ > │ <= │ >= │ == │ !=
 
-<sent_if> ::= <simple_if> │ <simple_if> <else> │ <simple_if> <else if>
-<simple_if> ::= (<exp_log>) {<sentence>}
-<else> ::= else (<exp_log>) {<sentence>}
-<else if> ::= else if (<exp_log>) {<sentence>} <else if> │ 
-              else if (<exp_log>) {<sentence>} <else>
+<sent_if> ::= <simple_if> │ <simple_if> <else> │ <simple_if> <else if> │ <simple_if> <sent_if>
+<simple_if> ::= if (<exp_log>) {<set_sentc>}
+<else> ::= else {<set_sentc>}
+<else if> ::= else if (<exp_log>) {<set_sentc>} <else if> │ 
+              else if (<exp_log>) {<set_sentc>} <else>
 
-<sent_for> ::=  for (<numeric> ; <exp_log> ; <inc>){<sentence>}
-                for (<numeric> ; <exp_log> ; <dec>){<sentence>}
-<inc> ::= <num>++;
-<dec> ::= <num>--;
+<sent_for> ::=  for (<numeric> ; <exp_log> ; <inc>){<set_sentc>}
+                for (<numeric> ; <exp_log> ; <dec>){<set_sentc>}
+<inc> ::= <id>++;
+<dec> ::= <id>--;
