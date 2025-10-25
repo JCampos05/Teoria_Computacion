@@ -16,6 +16,10 @@
         "stack": "cpp",
         "xlocale": "cpp",
         "iosfwd": "cpp",
-        "ios": "cpp"
+        "ios": "cpp",
+        "fstream": "cpp",
+        "istream": "cpp",
+        "iomanip": "cpp",
+        "xtree": "cpp"
     }
 }

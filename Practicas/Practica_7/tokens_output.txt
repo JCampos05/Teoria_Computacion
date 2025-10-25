@@ -1,0 +1,102 @@
+Token	Tipo	Token	Tipo
+bool	PR	beca	Var
+=	Simb	false	PR
+;	Simb	float	PR
+porcentaje	Var	=	Simb
+0	Num	;	Simb
+int	PR	prom	Var
+=	Simb	0	Num
+,	Simb	years	Var
+=	Simb	0	Num
+,	Simb	porcBeca	Var
+=	Simb	0	Num
+;	Simb	string	PR
+alumno	Var	;	Simb
+write	PR	(	Simb
+"Sistema de becas"	Cadena	)	Simb
+;	Simb	write	PR
+(	Simb	"Ingrese el nombre del alumno: "	Cadena
+)	Simb	;	Simb
+input	PR	(	Simb
+alumno	Var	)	Simb
+;	Simb	write	PR
+(	Simb	"Ingrese su promedio sin punto decimal: "	Cadena
+)	Simb	;	Simb
+input	PR	(	Simb
+prom	Var	)	Simb
+;	Simb	write	PR
+(	Simb	"Ingrese los años de estudio: "	Cadena
+)	Simb	;	Simb
+input	PR	(	Simb
+years	Var	)	Simb
+;	Simb	if	PR
+(	Simb	prom	Var
+>=	Simb	80	Num
+)	Simb	{	Simb
+for	PR	(	Simb
+int	PR	i	Var
+=	Simb	0	Num
+;	Simb	i	Var
+<	Simb	years	Var
+;	Simb	i	Var
+++	Simb	)	Simb
+{	Simb	float	PR
+porcentaje	Var	+=	Simb
+0.05	Num	;	Simb
+}	Simb	bool	PR
+beca	Var	=	Simb
+true	PR	;	Simb
+int	PR	porcBeca	Var
+=	Simb	porcentaje	Var
+*	Simb	100	Num
+;	Simb	write	PR
+(	Simb	"El alumno "	Cadena
+,	Simb	alumno	Var
+,	Simb	" tiene: "	Cadena
+,	Simb	porcBeca	Var
+,	Simb	" % de beca por obtener el promedio de: "	Cadena
+,	Simb	prom	Var
+)	Simb	;	Simb
+}	Simb	else	PR
+if	PR	(	Simb
+(	Simb	prom	Var
+>=	Simb	60	Num
+)	Simb	&&	Simb
+(	Simb	prom	Var
+<	Simb	80	Num
+)	Simb	)	Simb
+{	Simb	for	PR
+(	Simb	i	Var
+=	Simb	0	Num
+;	Simb	i	Var
+<	Simb	years	Var
+;	Simb	i	Var
+++	Simb	)	Simb
+{	Simb	float	PR
+porcentaje	Var	+=	Simb
+0.02	Num	;	Simb
+}	Simb	bool	PR
+beca	Var	=	Simb
+true	PR	;	Simb
+int	PR	porcBeca	Var
+=	Simb	porcentaje	Var
+*	Simb	100	Num
+;	Simb	write	PR
+(	Simb	"El alumno "	Cadena
+,	Simb	alumno	Var
+,	Simb	" tiene: "	Cadena
+,	Simb	porcBeca	Var
+,	Simb	" % de beca por obtener el promedio de: "	Cadena
+,	Simb	prom	Var
+)	Simb	;	Simb
+}	Simb	else	PR
+{	Simb	bool	PR
+beca	Var	=	Simb
+false	PR	;	Simb
+write	PR	(	Simb
+"El alumno no pudo obtener beca."	Cadena	)	Simb
+;	Simb	}	Simb
+system	PR	(	Simb
+"pause"	Cadena	)	Simb
+;	Simb	return	PR
+0	Num	;	Simb
