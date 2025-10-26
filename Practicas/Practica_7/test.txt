@@ -1,0 +1,4 @@
+#include <aputs_agets>
+
+int a = 0;
+bool no = true;
