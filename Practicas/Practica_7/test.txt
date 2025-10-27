@@ -2,3 +2,7 @@
 
 int a = 0;
 bool no = true;
+
+if (){
+    no = false;
+}

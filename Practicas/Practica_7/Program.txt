@@ -14,7 +14,7 @@ write("Ingrese los años de estudio: ");
 input(years);
 
 if(prom >= 80){
-    for(int i = 0; i < years ; i++)
+    for(int i = 0; i < years ; i++){
         porcentaje = porcentaje + 0.05;
     }
     beca = true;

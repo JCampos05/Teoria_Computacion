@@ -10,7 +10,7 @@
 #include <sstream> //librerias .csv
 #include <iomanip>
 #include <set>  
-#define archivo1 "Program.txt"
+#define archivo1 "test.txt"
 using namespace std;
 
 struct MainProgram {
@@ -20,11 +20,47 @@ vector <MainProgram> v_MP;
 
 struct token {
     string lexema, tipo;
+    int linea;
 };
 vector <token> v_tokens;
 int acumToken = 0;
 vector <string> Error;
 
+
+struct setError { // Estructura para almacenar Errores léxicos
+    int codigo;
+    string tipo;
+    string descripcion;
+    int linea;
+    string lexema;
+    string reference;
+};
+vector<setError> ErroresLexicos;
+
+struct TipoError { // Array de definiciones de Errores
+    int codigo;
+    string nombre;
+    string descripcion;
+};
+
+const TipoError Errores[] = { // Catálogo de Errores léxicos
+    {1, "CADENA_NO_CERRADA", "Cadena literal sin comillas de cierre"},
+    {2, "CARACTER_INVALIDO", "Carácter no válido en el lenguaje"},
+    {3, "NUMERO_INVALIDO", "Formato numérico incorrecto"},
+    {4, "IDENTIFICADOR_INVALIDO", "Identificador mal formado"},
+    
+    // Errores Sintácticos (11-30)
+    {11, "SENTENCIA_INCOMPLETA", "Sentencia incompleta o mal formada"},
+    {12, "FALTA_PUNTO_COMA", "Se esperaba ';' al final de la sentencia"},
+    {13, "DECLARACION_INVALIDA", "Declaración de variable incompleta"},
+    {14, "FALTA_ASIGNACION", "Falta el operador '=' en la declaración"},
+    {15, "VALOR_FALTANTE", "Falta el valor después de '='"},
+    {16, "TIPO_INVALIDO", "Tipo de dato no válido"},
+    {17, "ESTRUCTURA_INVALIDA", "Estructura de control mal formada"},
+    {18, "VARIABLE_SOLA", "Variable declarada sin inicialización"},
+    {19, "EXPRESION_INVALIDA", "Expresión inválida o incompleta"}
+};
+bool matchError = false;
 
 string palabrasReservadas[] = {
     "if", "else", "for", "while", "int", "float", "bool", 
@@ -51,15 +87,15 @@ void error() { // funcion de error genérico (2024)
     system("cls");
 }
 
-token peek() { // Agregar error al vector de errores
+token peek() { // Agregar error al vector de Errores
     if (acumToken < v_tokens.size()) return v_tokens[acumToken];
-    token empty = {"", "FDC"};
+    token empty = {"", "FDC", -1};
     return empty;
 }
 
-void reportError(string mensaje) { // Agregar error al vector de errores
+void reportError(string mensaje) { // Agregar error al vector de Errores
     token t = peek();
-    string err = "Error sintáctico en token '" + t.lexema + "': " + mensaje;
+    string err = "Línea " + to_string(t.linea) + " - Error sintáctico en token '" + t.lexema + "': " + mensaje;
     Error.push_back(err);
 }
 
@@ -123,6 +159,12 @@ bool sentExpFor() {
         return false;
     }
     
+    // ✓ VALIDAR QUE LA CONDICIÓN NO ESTÉ VACÍA
+    if (match(";")) {
+        reportError("La condición del 'for' no puede estar vacía");
+        return false;
+    }
+    
     // Condición
     if (!expLogic()) {
         reportError("Condición inválida en 'for'");
@@ -131,6 +173,12 @@ bool sentExpFor() {
     
     if (!consume(";")) {
         reportError("Se esperaba ';' después de la condición");
+        return false;
+    }
+    
+    // ✓ VALIDAR QUE EL INCREMENTO NO ESTÉ VACÍO
+    if (match(")")) {
+        reportError("Se esperaba una expresión de incremento en 'for'");
         return false;
     }
     
@@ -176,6 +224,12 @@ bool sentExpIf() {
         return false;
     }
     
+    // ✓ VALIDAR QUE NO ESTÉ VACÍO
+    if (match(")")) {
+        reportError("La condición del 'if' no puede estar vacía");
+        return false;
+    }
+    
     if (!expLogic()) {
         reportError("Expresión lógica inválida en 'if'");
         return false;
@@ -191,7 +245,6 @@ bool sentExpIf() {
         return false;
     }
     
-    // ✓ Parsear conjunto de sentencias dentro del bloque
     if (!set_sentc()) {
         reportError("Bloque de sentencias inválido en 'if'");
         return false;
@@ -202,10 +255,9 @@ bool sentExpIf() {
         return false;
     }
     
-    // Manejar else/else if
     if (consume("else")) {
         if (match("if")) {
-            return sentExpIf(); // Recursión para else if
+            return sentExpIf();
         }
 
         if (!consume("{")) {
@@ -234,12 +286,21 @@ bool sentId(){ // <id> ::= <nums> | <num> | var | "chain" | <float>
     return false;
 }
 
-bool sentCmp(){ // <cmp> ::= <id> <log_ope> <id> | <exp_log> | true | false
+bool sentCmp() {
+    token t = peek();
+    
+    // ✓ VALIDAR QUE NO SEA FIN O SÍMBOLO INESPERADO
+    if (t.tipo == "FDC" || t.lexema == ")" || t.lexema == "}" || t.lexema == ";") {
+        return false;
+    }
+    
+    // Literales booleanos
     if (match("true") || match("false")) {
         advance();
         return true;
     }
-
+    
+    // Expresión entre paréntesis
     if (consume("(")) {
         if (!expLogic()) {
             reportError("Expresión lógica inválida entre paréntesis");
@@ -251,19 +312,28 @@ bool sentCmp(){ // <cmp> ::= <id> <log_ope> <id> | <exp_log> | true | false
         }
         return true;
     }
-
+    
+    // Comparación: <id> <operador> <id>
     int savePos = acumToken;
-
+    
     if (sentId()) {
         if (match("<") || match(">") || match("<=") || match(">=") || 
             match("==") || match("!=")) {
-            advance(); //consume el operador
-            if (sentId()) return true;
+            advance();
+            
+            if (sentId()) {
+                return true;
+            } else {
+                reportError("Se esperaba un valor después del operador de comparación");
+                return false;
+            }
         }
+        
+        // No es comparación, restaurar
+        acumToken = savePos;
     }
-    // Si falla, restaurar y probar expresión lógica recursiva
-    acumToken = savePos;
-    return expLogic();
+    
+    return false;
 }
 bool sentExpNot(){ // <exp_not> ::= !<exp_not> | <cmp>
     if (consume("!")) return sentExpNot();
@@ -543,8 +613,197 @@ bool program() { // <program> ::= <set_sentc>
     return result;
 }
 
+void registrarError(int codigoError, int linea, string lexema, string reference = "") {
+    setError error;
+    error.codigo = codigoError;
+    error.tipo = "Léxico";
+    error.linea = linea;
+    error.lexema = lexema;
+    error.reference = reference;
+    
+    // Buscar descripción del error
+    int numErrores = sizeof(Errores) / sizeof(Errores[0]);
+    for(int i = 0; i < numErrores; i++) {
+        if(Errores[i].codigo == codigoError) {
+            error.descripcion = Errores[i].descripcion;
+            break;
+        }
+    }
+    
+    ErroresLexicos.push_back(error);
+    matchError = true;
+}
+
+void registrarErrorSintactico(int codigo, int linea, string lexema, string reference) {
+    setError err;
+    err.codigo = codigo;
+    err.tipo = "Sintáctico";
+    err.linea = linea;
+    err.lexema = lexema;
+    err.reference = reference;
+    
+    for(int i = 0; i < sizeof(Errores)/sizeof(Errores[0]); i++) {
+        if(Errores[i].codigo == codigo) {
+            err.descripcion = Errores[i].descripcion;
+            break;
+        }
+    }
+    
+    ErroresLexicos.push_back(err);
+    matchError = true;
+}
+bool PalabraReservada(string palabra);
+// Función para validar sintaxis de una línea completa
+bool validarSintaxisLinea(string linea, int numLinea) {
+    // Remover espacios al inicio y final
+    int inicio = 0, fin = linea.length() - 1;
+    while(inicio < linea.length() && isspace(linea[inicio])) inicio++;
+    while(fin >= 0 && isspace(linea[fin])) fin--;
+    
+    if(inicio > fin) return true; // Línea vacía
+    
+    string lineaTrim = linea.substr(inicio, fin - inicio + 1);
+
+    if(lineaTrim == "}" || lineaTrim == "{") {
+        return true;
+    }
+    bool soloLlaves = true;
+    for(char c : lineaTrim) {
+        if(c != '{' && c != '}' && !isspace(c)) {
+            soloLlaves = false;
+            break;
+        }
+    }
+    if(soloLlaves) return true;
+    // Verificar que termine en ';' o '}' o '{'
+    char ultimoCarNoEspacio = lineaTrim[lineaTrim.length() - 1];
+    
+    // Contar tokens básicos para validación
+    vector<string> tokens;
+    string palabra = "";
+    bool enComillas = false;
+    
+    for(int i = 0; i < lineaTrim.length(); i++) {
+        char c = lineaTrim[i];
+        
+        if(c == '"') {
+            enComillas = !enComillas;
+            if(!enComillas && !palabra.empty()) {
+                tokens.push_back(palabra + "\"");
+                palabra = "";
+            } else {
+                palabra += c;
+            }
+        } else if(enComillas) {
+            palabra += c;
+        } else if(isspace(c) || c == '(' || c == ')' || c == '{' || c == '}' || 
+                  c == ';' || c == '=' || c == ',' || c == '+' || c == '-' || 
+                  c == '*' || c == '/' || c == '<' || c == '>') {
+            if(!palabra.empty()) {
+                tokens.push_back(palabra);
+                palabra = "";
+            }
+            if(!isspace(c)) {
+                string s = ""; s += c;
+                tokens.push_back(s);
+            }
+        } else {
+            palabra += c;
+        }
+    }
+    if(!palabra.empty()) tokens.push_back(palabra);
+    
+    // Validar patrones comunes de error
+    if(tokens.size() == 0) return true;
+    
+    // Patrón: tipo + identificador SIN '='  (ej: "int a")
+    if(tokens.size() >= 2) {
+        string primero = tokens[0];
+        if(primero == "int" || primero == "float" || primero == "bool" || 
+           primero == "char" || primero == "string") {
+            
+            // Debe haber al menos: tipo + var + = + valor
+            bool tieneIgual = false;
+            for(int i = 0; i < tokens.size(); i++) {
+                if(tokens[i] == "=") {
+                    tieneIgual = true;
+                    break;
+                }
+            }
+            
+            if(!tieneIgual && ultimoCarNoEspacio != '{' && ultimoCarNoEspacio != '}') {
+                registrarErrorSintactico(18, numLinea, lineaTrim, linea);
+                return false;
+            }
+            
+            // Si tiene '=', verificar que haya valor después
+            if(tieneIgual) {
+                bool encontroIgual = false;
+                bool hayValorDespues = false;
+                
+                for(int i = 0; i < tokens.size(); i++) {
+                    if(tokens[i] == "=") {
+                        encontroIgual = true;
+                    } else if(encontroIgual && tokens[i] != ";") {
+                        hayValorDespues = true;
+                        break;
+                    }
+                }
+                
+                if(!hayValorDespues) {
+                    registrarErrorSintactico(15, numLinea, "=", linea);
+                    return false;
+                }
+            }
+        }
+    }
+    
+    // Patrón: solo un identificador (ej: "n")
+    if(tokens.size() == 1 && !PalabraReservada(tokens[0]) && ultimoCarNoEspacio != ';' && tokens[0] != "{" && tokens[0] != "}") {
+        registrarErrorSintactico(11, numLinea, tokens[0], linea);
+        return false;
+    }
+    
+    // Verificar punto y coma al final (excepto para estructuras de control)
+    if(ultimoCarNoEspacio != ';' && ultimoCarNoEspacio != '{' && ultimoCarNoEspacio != '}') {
+        // Verificar si es estructura de control
+        bool esEstructuraControl = false;
+        if(tokens.size() > 0) {
+            string primero = tokens[0];
+            if(primero == "if" || primero == "else" || primero == "for" ) {
+                esEstructuraControl = true;
+            }
+        }
+                    // Si es estructura de control sin paréntesis ni condición, es válida (el parser sintáctico lo detectará)
+            if(tokens.size() >= 2 && (tokens[0] == "else" && tokens[1] == "if")) {
+                return true; // Dejar que el parser sintáctico lo maneje
+            }
+        if(!esEstructuraControl) {
+            // Solo reportar error si NO es una estructura incompleta con llaves
+            bool tieneParentesis = false;
+            for(int i = 0; i < tokens.size(); i++) {
+                if(tokens[i] == "(" || tokens[i] == ")") {
+                    tieneParentesis = true;
+                    break;
+                }
+            }
+
+    
+            registrarErrorSintactico(12, numLinea, lineaTrim, linea);
+            return false;
+        }
+        if(!esEstructuraControl) {
+            registrarErrorSintactico(12, numLinea, lineaTrim, linea);
+            return false;
+        }
+        
+    }
+    
+    return true;
+}
+
 // Función para verificar si es palabra reservada
-bool esPalabraReservada(string palabra) {
+bool PalabraReservada(string palabra) {
     int numPalabras = sizeof(palabrasReservadas) / sizeof(palabrasReservadas[0]);
     for(int i = 0; i < numPalabras; i++) {
         if(palabrasReservadas[i] == palabra) return true;
@@ -553,7 +812,7 @@ bool esPalabraReservada(string palabra) {
 }
 
 // Función para verificar si es un número
-bool esNumero(string str) {
+bool setNum(string str, int linea) {
     if(str.empty()) return false;
     
     bool tienePunto = false;
@@ -564,29 +823,56 @@ bool esNumero(string str) {
         inicio = 1;
         if(str.length() == 1) return false;
     }
+    
     for(int i = inicio; i < str.length(); i++) {
         if(str[i] == '.') {
-            if(tienePunto) return false; // Más de un punto
+            if(tienePunto) return false; // Múltiples puntos
             tienePunto = true;
         } else if(!isdigit(str[i])) {
             return false;
         }
     }
+    
     // No puede terminar o empezar solo con punto
-    if(str == "." || str == "+." || str == "-.") return false;
+    if(str == "." || str == "+." || str == "-.") {
+        registrarError(3, linea, str);
+        return false;
+    }
+    
     return true;
 }
 
 // Función para verificar si es un identificador válido
-bool esIdentificador(string str) {
-    if(str.empty() || !isalpha(str[0])) return false;
+bool setIdentificador(string str, int linea) {
+    if (str.empty() || !isalpha(str[0])) {
+        registrarError(4, linea, str);
+        return false;
+    }
     for(int i = 0; i < str.length(); i++) {
-        if(!isalnum(str[i]) && str[i] != '_') return false;
+        if(!isalnum(str[i]) && str[i] != '_') {
+            registrarError(4, linea, str);
+            return false;
+        }
     }
     return true;
 }
-
-string setType(string lexema){
+bool esPalabraValida(string palabra, int linea, string reference) {
+    if(palabra.empty()) return true;
+    
+    // 1. Verificar palabras reservadas
+    if(PalabraReservada(palabra)) return true;
+    
+    // 2. Verificar números
+    if(setNum(palabra, linea)) return true;
+    
+    // 3. Verificar identificadores
+    if(setIdentificador(palabra, linea)) return true;
+    
+    // 4. Si no es válido, registrar error
+    registrarError(2, linea, palabra, reference);
+    return false;
+}
+string setType(string lexema, int linea){
     if(lexema.empty()) return "Desconocido";
     
     if(lexema.length() == 2 && valid_symbols2.find(lexema) != valid_symbols2.end()) 
@@ -594,95 +880,137 @@ string setType(string lexema){
     if(lexema.length() == 1 && valid_symbols.find(lexema[0]) != valid_symbols.end()) 
         return "SimpleSimb";
     // Palabras reservadas
-    if(esPalabraReservada(lexema)) return "PR";
+    if(PalabraReservada(lexema)) return "PR";
     // Números
-    if(esNumero(lexema)) return "Num";
+    if(setNum(lexema, linea)) return "Num";
     // Cadenas entre comillas
     if(lexema.length() >= 2 && lexema[0] == '"' && lexema[lexema.length()-1] == '"') 
         return "Cadena";
     // Identificadores (variables)
-    if(esIdentificador(lexema)) 
+    if(setIdentificador(lexema, linea)) 
         return "Var";
     return "Desconocido";
 }
-void addToken(string lexema, string tipo){
+void addToken(string lexema, string tipo, int linea){
     if(lexema.empty()) return;
     token t;
     t.lexema = lexema;
     t.tipo = tipo;
+    t.linea = linea;
     v_tokens.push_back(t);
 }
-void analisisLexico(string line){
+void analisisLexico(string line, int numLinea) {
+    if(!validarSintaxisLinea(line, numLinea)) {
+        return; // Ya se registró el error sintáctico
+    }
+
     bool comillas = false;
-    string palabra = "" , cadena = "";
+    string palabra = "", cadena = "";
     
     for (int i = 0; i < line.length(); i++) {
         char car = line[i];
 
+        // Manejo de cadenas literales
         if (car == '"') {
             if (!comillas) {
                 if (!palabra.empty()) {
-                    addToken(palabra, setType(palabra));
+                    if(!esPalabraValida(palabra, numLinea, line)) {
+                        return;
+                    }
+                    addToken(palabra, setType(palabra, numLinea), numLinea);
                     palabra = "";
                 }
                 comillas = true;
                 cadena = "\"";
             } else {
                 cadena += "\"";
-                addToken(cadena, "Cadena");
+                // Permitir cadenas vacías (comentar siguiente bloque si no las quieres)
+                // if(cadena == "\"\"") {
+                //     registrarError(6, numLinea, cadena, line);
+                //     return;
+                // }
+                addToken(cadena, "Cadena", numLinea);
                 cadena = "";
                 comillas = false;
             }
             continue;
         }
+        
         if(comillas) {
             cadena += car;
             continue;
         }
-        // ✓ MANEJAR PUNTO DECIMAL
+
+        // Validar punto decimal en números
         if (car == '.' && !palabra.empty() && i + 1 < line.length() && isdigit(line[i+1])) {
-            // Es un decimal, agregar el punto a la palabra
             palabra += car;
             continue;
         }
-        // Verificar operadores de dos caracteres
+
+        // Manejo de operadores dobles
         if (i < line.length() - 1) {
             string dobleChar = "";
             dobleChar += car;
             dobleChar += line[i+1];
+
             if(valid_symbols2.find(dobleChar) != valid_symbols2.end()) {
                 if(!palabra.empty()) {
-                    addToken(palabra, setType(palabra));
+                    if(!esPalabraValida(palabra, numLinea, line)) {
+                        return;
+                    }
+                    addToken(palabra, setType(palabra, numLinea), numLinea);
                     palabra = "";
                 }
                 if(dobleChar != "//") {
-                    addToken(dobleChar, setType(dobleChar));
+                    addToken(dobleChar, setType(dobleChar, numLinea), numLinea);
                 }
                 i++;
                 continue;
             }
         }
-        // Símbolos simples (excepto punto que puede ser decimal)
+        
+        // Símbolos simples
         if(valid_symbols.find(car) != valid_symbols.end()) {
             if(!palabra.empty()) {
-                addToken(palabra, setType(palabra));
+                if(!esPalabraValida(palabra, numLinea, line)) {
+                    return;
+                }
+                addToken(palabra, setType(palabra, numLinea), numLinea);
                 palabra = "";
             }
             string simbolo = "";
             simbolo += car;
-            addToken(simbolo, setType(simbolo));
+            addToken(simbolo, setType(simbolo, numLinea), numLinea);
         } else if (isspace(car)) {
             if(!palabra.empty()) {
-                addToken(palabra, setType(palabra));
+                if(!esPalabraValida(palabra, numLinea, line)) {
+                    return;
+                }
+                addToken(palabra, setType(palabra, numLinea), numLinea);
                 palabra = "";
             }
         } else {
+            // Validar caracteres permitidos
+            if(!isalnum(car) && car != '_' && car != '.') {
+                registrarError(2, numLinea, string(1, car), line);
+                return;
+            }
             palabra += car;
         }
     }
+    
+    // Verificar si quedó una cadena sin cerrar
+    if(comillas) {
+        registrarError(1, numLinea, cadena, line);
+        return;
+    }
+    
+    // Procesar última palabra
     if (!palabra.empty()) {
-        addToken(palabra, setType(palabra));
-        palabra = "";
+        if(!esPalabraValida(palabra, numLinea, line)) {
+            return;
+        }
+        addToken(palabra, setType(palabra, numLinea), numLinea);
     }
 }
 void tokenTable(){
@@ -703,6 +1031,45 @@ void tokenTable(){
     }
     cout << "└──────────────────┴───────────────────────────────────────────────┘"<<endl;
 }
+void mostrarTodosLosErrores() {
+    if(ErroresLexicos.empty()) return;
+    
+    cout << "\n╔═══════════════════════════════════════════════════════════════╗" << endl;
+    cout << "║            ❌ ERRORES DETECTADOS EN EL ANÁLISIS ❌           ║" << endl;
+    cout << "╚═══════════════════════════════════════════════════════════════╝" << endl;
+    
+    for(int i = 0; i < ErroresLexicos.size(); i++) {
+        setError err = ErroresLexicos[i];
+        
+        cout << "\n┌─ ERROR #" << (i+1) << " [" << err.tipo << "] ";
+        //cout << string(40, '─') << endl;
+        cout << "│ 📍 Línea:       " << err.linea << endl;
+        cout << "│ 🔤 Lexema:      '" << err.lexema << "'" << endl;
+        cout << "│ 📋 Código:      " << err.codigo << endl;
+        cout << "│ 💬 Descripción: " << err.descripcion << endl;
+        
+        if(!err.reference.empty()) {
+            cout << "│" << endl;
+            cout << "│ 📄 Línea completa:" << endl;
+            cout << "│    " << err.reference << endl;
+            
+            // Indicador visual
+            size_t pos = err.reference.find(err.lexema);
+            if(pos != string::npos) {
+                cout << "│    " << string(pos, ' ') << "^";
+                if(err.lexema.length() > 1) {
+                    cout << string(err.lexema.length() - 1, '~');
+                }
+                cout << endl;
+            }
+        }
+        
+        //cout << "└" << string(60, '─') << endl;
+    }
+    
+    cout << "\n⚠️  Total de errores: " << ErroresLexicos.size() << endl;
+    cout << "⛔ El análisis se ha detenido.\n" << endl;
+}
 void loadPGM() {
     cout << "Cargando el programa..." << endl;
     ifstream archPGM(archivo1);
@@ -710,24 +1077,44 @@ void loadPGM() {
         cout<< "Error: No se pudo abrir el archivo." << endl;
         return;
     }
+
     string linea;
+    int NoLine = 0;
     getline(archPGM, linea);
+
     while (getline(archPGM, linea)) {
-        stringstream cadena(linea); // Convertir la cadena a un stream
-        string line;
+        NoLine ++;  // ✓ Incrementar línea
+        
+        // Saltar líneas vacías o solo con espacios
+        bool esVacia = true;
+        for(char c : linea) {
+            if(!isspace(c)) {
+                esVacia = false;
+                break;
+            }
+        }
+        if(esVacia) continue;
+        
         MainProgram data;
-
-        getline(cadena, line);
-        data.linea = line;
-
+        data.linea = linea;
         v_MP.push_back(data);
-        cout << data.linea << endl;
-        analisisLexico(linea);
+
+        cout << NoLine << ": " << data.linea << endl;
+        //cout << NoLine << ": " << linea << endl;  // ✓ Mostrar número de línea
+        analisisLexico(linea, NoLine);  
+
+        if (matchError) {
+            cout << "\n Análisis detenido por error léxico" << endl;
+            archPGM.close();
+            return;
+        }
+        
     }
     cout << endl;
     cout << "¡Programa cargado exitosamente!" << endl;
     system("pause");
 }
+
 void MainProcess(){
     v_MP.clear();
     v_tokens.clear();
@@ -735,17 +1122,21 @@ void MainProcess(){
 
     acumToken = 0;
     loadPGM();
-    tokenTable();
+    if(matchError){
+        mostrarTodosLosErrores(); 
+        return;
+    } 
     
+    tokenTable();
     cout << "Total de tokens: " << v_tokens.size() << endl;
 
     bool resultFinal = program();
 
     if (Error.empty()) {
-        cout << "\n✓ Análisis sintáctico completado sin errores" << endl;
+        cout << "\n✓ Análisis sintáctico completado sin Errores" << endl;
         cout << "✓ El programa es sintácticamente correcto" << endl;
     } else {
-        cout << "\nSe encontraron " << Error.size() << " errores sintácticos:" << endl;
+        cout << "\nSe encontraron " << Error.size() << " Errores sintácticos:" << endl;
         for (int i = 0; i < Error.size(); i++) {
             cout << (i+1) << ". " << Error[i] << endl;
         }
